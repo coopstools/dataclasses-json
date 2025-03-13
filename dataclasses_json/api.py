@@ -71,7 +71,10 @@ class DataClassJsonMixin(abc.ABC):
                    parse_constant=None,
                    infer_missing=False,
                    **kw) -> A:
-        kvs = json5.loads(s,
+        if isinstance(s, bytes) or isinstance(s, bytearray):
+            s = s.decode()
+
+        kvs = json5.loads(str(s),
                          parse_float=parse_float,
                          parse_int=parse_int,
                          parse_constant=parse_constant,
