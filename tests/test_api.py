@@ -250,3 +250,14 @@ class TestConfig:
     def test_config_decode(self):
         dc = DataClassWithConfigDecorator('a')
         assert DataClassWithConfigDecorator.from_json('{"idField": "a"}') == dc
+
+class TestJSON5:
+    def test_json5_basic(self):
+        dc = DataClassWithConfigDecorator('a')
+        assert DataClassWithConfigDecorator.from_json5('{idField: "a"}') == dc
+
+    def test_json5f(self, tmpdir):
+        tmpdir.join("testfile.json5").write('{idField: "a"}')
+        dc = DataClassWithConfigDecorator('a')
+        with open(str(tmpdir)+"/testfile.json5") as f:
+            assert DataClassWithConfigDecorator.from_json5f(f) == dc
