@@ -1,6 +1,7 @@
 import abc
 import json
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union, overload
+import json5
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union, overload, IO
 
 from dataclasses_json.cfg import config, LetterCase
 from dataclasses_json.core import (Json, _ExtendedEncoder, _asdict,
@@ -56,6 +57,41 @@ class DataClassJsonMixin(abc.ABC):
                   infer_missing=False,
                   **kw) -> A:
         kvs = json.loads(s,
+                         parse_float=parse_float,
+                         parse_int=parse_int,
+                         parse_constant=parse_constant,
+                         **kw)
+        return cls.from_dict(kvs, infer_missing=infer_missing)
+
+    @classmethod
+    def from_json5(cls: Type[A],
+                   s: JsonData,
+                   *,
+                   parse_float=None,
+                   parse_int=None,
+                   parse_constant=None,
+                   infer_missing=False,
+                   **kw) -> A:
+        if isinstance(s, bytes) or isinstance(s, bytearray):
+            s = s.decode()
+
+        kvs = json5.loads(str(s),
+                          parse_float=parse_float,
+                          parse_int=parse_int,
+                          parse_constant=parse_constant,
+                          **kw)
+        return cls.from_dict(kvs, infer_missing=infer_missing)
+
+    @classmethod
+    def from_json5f(cls: Type[A],
+                    f: IO,
+                    *,
+                    parse_float=None,
+                    parse_int=None,
+                    parse_constant=None,
+                    infer_missing=False,
+                    **kw) -> A:
+        kvs = json5.load(f,
                          parse_float=parse_float,
                          parse_int=parse_int,
                          parse_constant=parse_constant,
@@ -142,6 +178,8 @@ def _process_class(cls: Type[T], letter_case: Optional[LetterCase],
     # unwrap and rewrap classmethod to tag it to cls rather than the literal
     # DataClassJsonMixin ABC
     cls.from_json = classmethod(DataClassJsonMixin.from_json.__func__)  # type: ignore[attr-defined]
+    cls.from_json5 = classmethod(DataClassJsonMixin.from_json5.__func__)  # type: ignore[attr-defined]
+    cls.from_json5f = classmethod(DataClassJsonMixin.from_json5f.__func__)  # type: ignore[attr-defined]
     cls.to_dict = DataClassJsonMixin.to_dict  # type: ignore[attr-defined]
     cls.from_dict = classmethod(DataClassJsonMixin.from_dict.__func__)  # type: ignore[attr-defined]
     cls.schema = classmethod(DataClassJsonMixin.schema.__func__)  # type: ignore[attr-defined]
